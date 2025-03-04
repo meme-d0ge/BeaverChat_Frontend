@@ -1,9 +1,11 @@
+'use client'
 import React from 'react';
+import AuthWidget from "@/widgets/AuthWidget/AuthWidget";
 
 const AuthPage = () => {
     return (
-        <main>
-            <p>Auth page</p>
+        <main className={'min-h-screen flex justify-center items-center'}>
+            <AuthWidget></AuthWidget>
         </main>
     );
 };
