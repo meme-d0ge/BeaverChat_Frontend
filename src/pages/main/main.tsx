@@ -1,10 +1,10 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {SideBar} from "@/widgets/SideBar";
 import {Panel, PanelGroup} from "react-resizable-panels";
 import {CustomPanelResizeHandle} from "@/shared/ui/CustomPanelResizeHandle";
 
 const MainPage = () => {
-    const [isOpen, setIsOpen] = useState<boolean>(false)
+    const [isOpen, setIsOpen] = useState<boolean>()
 
     return (
         <main className={'min-h-screen'}>

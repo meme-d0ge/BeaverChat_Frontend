@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useConverterToll} from '../model/useConverterToll'
 import {Panel} from "react-resizable-panels";
 
@@ -15,12 +15,6 @@ export interface SideBarProps {
 export const SideBar = ({className, children, collapseWidth=80, minWidth=260, maxWidth=420, defaultWidth=420, setIsOpen}: SideBarProps) => {
     const {toPx, toPercent} = useConverterToll();
     const [width, setWidth] = useState(defaultWidth);
-
-    useEffect(() => {
-        if (setIsOpen) {
-            setIsOpen(defaultWidth > minWidth)
-        }
-    }, []);
     return (
         <Panel
             onCollapse={()=>{
