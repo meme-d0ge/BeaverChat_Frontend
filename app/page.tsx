@@ -1,5 +1,5 @@
 'use client'
-import MainPage from "@/page/main/main";
+import MainPage from "@/pages/main/main";
 
 export default function RouterMainPage() {
   return (

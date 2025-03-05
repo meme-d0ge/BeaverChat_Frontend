@@ -1,6 +1,6 @@
 'use client'
 import React, {useEffect} from 'react';
-import AuthPage from "@/page/auth/auth";
+import AuthPage from "@/pages/auth/auth";
 import {useAppSelector} from "@/shared/hooks/useAppSelector";
 import {useRouter} from "next/navigation";
 import {StatusCookie} from "@/entities/cookie";
