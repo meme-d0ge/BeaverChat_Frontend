@@ -1,44 +1,42 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {useConverterToll} from '../model/useConverterToll'
-import {Panel} from "react-resizable-panels";
+'use client'
+import React, {ReactNode, useRef} from 'react';
+import useResizeHandler, {useResizeHandlerSetting} from "@/widgets/SideBar/model/useResizeHandler";
 
 export interface SideBarProps {
-    children?: React.ReactNode;
-    className?: string;
-    setIsOpen?: (isOpen: boolean) => void;
-    defaultWidth?: number;
-    maxWidth?: number;
-    minWidth?: number;
-    collapseWidth?: number;
+    children: ReactNode;
+    setIsOpen: (value: boolean)=>void;
 }
+export const SideBar = ({children, setIsOpen}: SideBarProps) => {
+    const panelRef = useRef(null)
+    const handlerRef = useRef(null)
 
-export const SideBar = ({className, children, collapseWidth=80, minWidth=260, maxWidth=420, defaultWidth=420, setIsOpen}: SideBarProps) => {
-    const {toPx, toPercent} = useConverterToll();
-    const [width, setWidth] = useState(defaultWidth);
+    const settingResize = {
+        handler: handlerRef,
+        panel: panelRef,
+
+        handlerActiveClassName: 'opacity-100',
+
+        breakPoints: {
+            minWidth: 260,
+            maxWidth: 420,
+            collapseWidth: 150,
+            collapseSize: 80,
+            defaultWidth: 260
+        },
+        localStore: 'main-panel',
+        setIsOpen: (value)=>{
+            setIsOpen(value)
+        }
+    } as useResizeHandlerSetting
+
+    const getStartWidthPanel = useResizeHandler(settingResize);
+
     return (
-        <Panel
-            onCollapse={()=>{
-                if (setIsOpen) {
-                    setIsOpen(false)
-                }
-            }}
-            onExpand={()=>{
-                if (setIsOpen) {
-                    setIsOpen(true)
-                }
-            }}
-            collapsible={true}
-            collapsedSize={toPercent(collapseWidth)}
-            minSize={toPercent(minWidth)}
-            maxSize={toPercent(maxWidth)}
-            defaultSize={toPercent(defaultWidth)}
-            className={className}
-            style={{maxWidth: width, minWidth: width}}
-            onResize={(percent)=>{
-                setWidth(toPx(percent));
-            }}
-        >
-            {children}
-        </Panel>
+        <div className={'flex relative w-max min-h-screen'}>
+            <div style={{width: getStartWidthPanel()}} className={`bg-neutral-800`} ref={panelRef}>
+                {children}
+            </div>
+            <div ref={handlerRef} className={`cursor-col-resize absolute right-[-2.5px] top-0 bottom-0 w-[5px] rounded-[50px] duration-300 bg-green-500 opacity-0 hover:opacity-100`}/>
+        </div>
     );
 };
