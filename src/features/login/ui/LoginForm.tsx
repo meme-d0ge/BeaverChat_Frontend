@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/shared/ui/card";
 import {Label} from "@/shared/ui/label";

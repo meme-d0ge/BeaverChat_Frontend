@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/shared/ui/tabs";
 import {LoginForm} from "@/features/login";
