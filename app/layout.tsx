@@ -13,7 +13,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Provider store={store}>
-        <body className={'dark'}>
+        <body className={'max-w-[1920px] mx-auto dark'}>
           {children}
           <Toaster/>
        </body>
