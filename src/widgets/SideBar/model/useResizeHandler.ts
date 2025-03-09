@@ -2,8 +2,8 @@
 import {RefObject, useEffect, useRef, useState} from "react";
 
 export interface BreakPoint {
-    nameBreakPoint: string;
-    alwaysActiveIf?: ()=>boolean;
+    nameBreakPoint: string
+    condition?: ()=> boolean | null,
 
     minSize: number | null;
     maxSize: number | null;
@@ -21,8 +21,8 @@ export interface useResizeHandlerSetting {
     panelActiveClassName?: string;
 
     breakPointsX: BreakPoint[];
-    defaultWidth: number;
     // breakPointsY: BreakPoint[]; //not implemented
+    defaultWidth: number;
 }
 
 const UseResizeHandler = ({
@@ -32,19 +32,27 @@ const UseResizeHandler = ({
                               handlerActiveClassName,
                               breakPointsX,
                               saveStateToLocalStorage,
-                              defaultWidth
+                              defaultWidth,
                           }: useResizeHandlerSetting) => {
     const findBreakPoint = (width: number) => {
         for (const i in breakPointsX) {
             const breakPoint = breakPointsX[i]
-            if ((breakPoint.minSize ? width > breakPoint.minSize : true) && (breakPoint.maxSize ? width < breakPoint.maxSize : true) ) {
+            if (breakPoint.condition){
+                const condition = breakPoint.condition()
+                if (condition === true){
+                    return breakPoint
+                } else if (condition === false){
+                    continue
+                }
+            }
+            if ((breakPoint.minSize ? width > breakPoint.minSize : true) && (breakPoint.maxSize ? width < breakPoint.maxSize : true)) {
                 return breakPoint
             }
         }
     };
 
     const getWidth = (localStoreName: string) => {
-        const width = Number(localStorage.getItem(localStoreName+':width'))
+        const width = Number(localStorage.getItem(localStoreName + ':width'))
         if (width) {
             return width
         } else {
@@ -52,7 +60,7 @@ const UseResizeHandler = ({
         }
     }
     const getActiveBreakPoint = (localStoreName: string) => {
-        const activeBreakPoint = localStorage.getItem(localStoreName+':breakPoint')
+        const activeBreakPoint = localStorage.getItem(localStoreName + ':breakPoint')
         if (activeBreakPoint) {
             return activeBreakPoint
         } else {
@@ -62,10 +70,10 @@ const UseResizeHandler = ({
     }
 
     const setWidth = (width: number, localStoreName: string) => {
-        localStorage.setItem(localStoreName+':width', String(width))
+        localStorage.setItem(localStoreName + ':width', String(width))
     }
     const setActiveBreakPoint = (localStoreName: string, activeBreakPoint: string) => {
-        localStorage.setItem(localStoreName+':breakPoint', activeBreakPoint)
+        localStorage.setItem(localStoreName + ':breakPoint', activeBreakPoint)
     }
 
     const activeResize = useRef<boolean>(false)
@@ -157,6 +165,14 @@ const UseResizeHandler = ({
         };
     }
 
+    const resizeWindowHandler = () => {
+        const breakPoint = findBreakPoint(Number(panelRef.current.style.width.slice(0, -2)))
+        if (breakPoint) {
+            setBreakPointActive(breakPoint.nameBreakPoint)
+            setActiveBreakPoint(saveStateToLocalStorage, breakPoint.nameBreakPoint)
+        }
+    }
+
     useEffect(() => {
         const handler = handlerRef.current;
         const panel = panelRef.current;
@@ -178,6 +194,7 @@ const UseResizeHandler = ({
         window.addEventListener('touchmove', touchMoveHandler)
         window.addEventListener('touchstart', touchStartHandler)
         window.addEventListener('touchend', touchEndHandler)
+        window.addEventListener('resize', resizeWindowHandler)
 
         handler.addEventListener('dragstart', preventDefaultDrag)
 
@@ -202,6 +219,7 @@ const UseResizeHandler = ({
             window.removeEventListener('touchmove', touchMoveHandler)
             window.removeEventListener('touchstart', touchStartHandler)
             window.removeEventListener('touchend', touchEndHandler)
+            window.removeEventListener('resize', resizeWindowHandler)
 
             if (handler) {
                 handler.removeEventListener('dragstart', preventDefaultDrag);

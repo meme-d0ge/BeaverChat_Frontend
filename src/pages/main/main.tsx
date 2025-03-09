@@ -7,10 +7,10 @@ const MainPage = () => {
 
     return (
         <main className={'min-h-screen flex'}>
-            <SideBar className={'border-r-[1px] border-neutral-600'} setIsOpen={setIsOpen}>
+            <SideBar className={'max-lg:!max-w-none max-lg:!min-w-auto max-lg:!w-screen lg:border-r-[1px] lg:border-neutral-600'} setIsOpen={setIsOpen}>
                 <p>test content</p>
             </SideBar>
-            <div>
+            <div className={'max-lg:invisible max-lg:absolute'}>
                 <p>test WorkSpace</p>
             </div>
         </main>

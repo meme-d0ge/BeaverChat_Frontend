@@ -20,6 +20,14 @@ export const SideBar = ({children, setIsOpen, className}: SideBarProps) => {
         breakPointsX: [
             {
                 nameBreakPoint: 'close',
+                condition: () => {
+                    const condition = window.innerWidth < 1024;
+                    if (condition) {
+                        return false;
+                    } else {
+                        return null
+                    }
+                },
 
                 minSize:null,
                 maxSize:130,
@@ -28,6 +36,11 @@ export const SideBar = ({children, setIsOpen, className}: SideBarProps) => {
             } as BreakPoint,
             {
                 nameBreakPoint: 'open',
+                condition: ()=>{
+                    const condition = window.innerWidth < 1024
+                    if (condition) return true
+                    else return null
+                },
 
                 minSize:160,
                 maxSize:null,
@@ -51,11 +64,11 @@ export const SideBar = ({children, setIsOpen, className}: SideBarProps) => {
     }, [breakPointActive]);
 
     return (
-        <div className={`flex relative w-max ${className}`}>
-            <div style={{width: getWidth + 'px'}} ref={panelRef}>
+        <div className={`flex relative w-max`}>
+            <div style={{width: getWidth + 'px'}} className={className} ref={panelRef}>
                 {children}
             </div>
-            <div ref={handlerRef} className={`cursor-col-resize absolute right-[-2.5px] top-0 bottom-0 w-[5px] rounded-[50px] duration-200 bg-indigo-500 opacity-0 hover:opacity-100 max-lg:w-0 max-lg:h-0 max-lg:invisible`}/>
+            <div ref={handlerRef} className={`cursor-col-resize absolute right-0 translate-x-1/2 top-0 bottom-0 w-[5px] rounded-[50px] duration-200 bg-indigo-500 opacity-0 hover:opacity-100 max-lg:w-0 max-lg:h-0 max-lg:invisible`}/>
         </div>
     );
 };
