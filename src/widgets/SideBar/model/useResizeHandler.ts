@@ -91,20 +91,19 @@ const UseResizeHandler = ({
     }
     const resizeX = (widthResize: number) => {
         if (activeResize.current) {
-            const breakPoint = findBreakPoint(widthResize)
+            const xPosition = panelRef.current.getBoundingClientRect().x
+            const relativePosition = widthResize - xPosition
+            const breakPoint = findBreakPoint(relativePosition)
             if (breakPoint){
-                resizeXPosition(widthResize, breakPoint)
+                resizeXPosition(relativePosition, breakPoint)
             }
         }
     }
-
     const resizeXPosition = (widthResize: number, breakPoint: BreakPoint) => {
-        const xPosition = panelRef.current.getBoundingClientRect().x
-
         panelRef.current.style.maxWidth = breakPoint.maxWidth
         panelRef.current.style.minWidth = breakPoint.minWidth
-        panelRef.current.style.width = (widthResize - xPosition) + 'px'
-        setWidth((widthResize - xPosition), saveStateToLocalStorage)
+        panelRef.current.style.width = widthResize + 'px'
+        setWidth(widthResize, saveStateToLocalStorage)
 
         if (breakPoint.nameBreakPoint && lateBreakPoint.current !== breakPoint.nameBreakPoint) {
             setBreakPointActive(breakPoint.nameBreakPoint)
