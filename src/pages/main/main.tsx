@@ -7,7 +7,7 @@ const MainPage = () => {
 
     return (
         <main className={'min-h-screen flex'}>
-            <SideBar setIsOpen={setIsOpen}>
+            <SideBar className={'border-r-[1px] border-neutral-600'} setIsOpen={setIsOpen}>
                 <p>test content</p>
             </SideBar>
             <div>

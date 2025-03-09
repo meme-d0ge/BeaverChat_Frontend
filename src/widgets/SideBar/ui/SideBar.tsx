@@ -5,8 +5,9 @@ import useResizeHandler, {BreakPoint, useResizeHandlerSetting} from "@/widgets/S
 export interface SideBarProps {
     children: ReactNode;
     setIsOpen: (value: boolean)=>void;
+    className?: string;
 }
-export const SideBar = ({children, setIsOpen}: SideBarProps) => {
+export const SideBar = ({children, setIsOpen, className}: SideBarProps) => {
     const panelRef = useRef(null)
     const handlerRef = useRef(null)
 
@@ -50,12 +51,11 @@ export const SideBar = ({children, setIsOpen}: SideBarProps) => {
     }, [breakPointActive]);
 
     return (
-        <div className={`flex relative w-max min-h-screen`}>
+        <div className={`flex relative w-max ${className}`}>
             <div style={{width: getWidth + 'px'}} ref={panelRef}>
                 {children}
             </div>
-            <div ref={handlerRef}
-                 className={`cursor-col-resize absolute right-[-2px] top-0 bottom-0 w-[5px] rounded-[50px] duration-200 bg-indigo-500 opacity-0 hover:opacity-100 max-lg:w-0 max-lg:h-0 max-lg:invisible`}/>
+            <div ref={handlerRef} className={`cursor-col-resize absolute right-[-2.5px] top-0 bottom-0 w-[5px] rounded-[50px] duration-200 bg-indigo-500 opacity-0 hover:opacity-100 max-lg:w-0 max-lg:h-0 max-lg:invisible`}/>
         </div>
     );
 };
