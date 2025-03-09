@@ -1,166 +1,226 @@
 'use client'
-import {RefObject, useEffect, useRef} from "react";
+import {RefObject, useEffect, useRef, useState} from "react";
 
+export interface BreakPoint {
+    nameBreakPoint: string;
+    alwaysActiveIf?: ()=>boolean;
 
+    minSize: number | null;
+    maxSize: number | null;
+
+    minWidth: string;
+    maxWidth: string;
+}
 export interface useResizeHandlerSetting {
-    handler: RefObject<any>;
+    saveStateToLocalStorage: string;
+
+    handlerRef: RefObject<any>;
     handlerActiveClassName?: string;
 
-    panel: RefObject<any>;
+    panelRef: RefObject<any>;
     panelActiveClassName?: string;
 
-    breakPoints: {
-        collapseWidth: number,
-        collapseSize: number,
-        minWidth: number,
-        maxWidth: number,
-        defaultWidth: number,
-    }
-    setIsOpen: (value: boolean)=>void
-    localStore?: string
+    breakPointsX: BreakPoint[];
+    defaultWidth: number;
+    // breakPointsY: BreakPoint[]; //not implemented
 }
-const UseResizeHandler = ({handler, handlerActiveClassName, panel, panelActiveClassName, breakPoints, setIsOpen, localStore}: useResizeHandlerSetting) => {
-    const activeResize = useRef(false)
-    const mouseDownWidth = useRef(0)
+
+const UseResizeHandler = ({
+                              handlerRef,
+                              panelRef,
+                              panelActiveClassName,
+                              handlerActiveClassName,
+                              breakPointsX,
+                              saveStateToLocalStorage,
+                              defaultWidth
+                          }: useResizeHandlerSetting) => {
+    const findBreakPoint = (width: number) => {
+        for (const i in breakPointsX) {
+            const breakPoint = breakPointsX[i]
+            if ((breakPoint.minSize ? width > breakPoint.minSize : true) && (breakPoint.maxSize ? width < breakPoint.maxSize : true) ) {
+                return breakPoint
+            }
+        }
+    };
+
+    const getWidth = (localStoreName: string) => {
+        const width = Number(localStorage.getItem(localStoreName+':width'))
+        if (width) {
+            return width
+        } else {
+            return defaultWidth
+        }
+    }
+    const getActiveBreakPoint = (localStoreName: string) => {
+        const activeBreakPoint = localStorage.getItem(localStoreName+':breakPoint')
+        if (activeBreakPoint) {
+            return activeBreakPoint
+        } else {
+            const breakPoint = findBreakPoint(getWidth(localStoreName))
+            return breakPoint ? breakPoint.nameBreakPoint : ''
+        }
+    }
+
+    const setWidth = (width: number, localStoreName: string) => {
+        localStorage.setItem(localStoreName+':width', String(width))
+    }
+    const setActiveBreakPoint = (localStoreName: string, activeBreakPoint: string) => {
+        localStorage.setItem(localStoreName+':breakPoint', activeBreakPoint)
+    }
+
+    const activeResize = useRef<boolean>(false)
+    const [isActiveResize, setActiveResize] = useState<boolean>(false)
+    const [breakPointActive, setBreakPointActive] = useState<string>(getActiveBreakPoint(saveStateToLocalStorage))
+    const lateBreakPoint = useRef<string>('')
+
+    const startResize = () => {
+        if (panelRef.current && handlerRef.current) {
+            panelRef.current.classList.add(panelActiveClassName);
+            handlerRef.current.classList.add(handlerActiveClassName);
+            activeResize.current = true
+            setActiveResize(true)
+        }
+    }
+    const endResize = () => {
+        if (panelRef.current && handlerRef.current) {
+            panelRef.current.classList.remove(panelActiveClassName);
+            handlerRef.current.classList.remove(handlerActiveClassName);
+            activeResize.current = false
+            setActiveResize(false)
+        }
+    }
+    const resizeX = (widthResize: number) => {
+        if (activeResize.current) {
+            const breakPoint = findBreakPoint(widthResize)
+            if (breakPoint){
+                resizeXPosition(widthResize, breakPoint)
+            }
+        }
+    }
+
+    const resizeXPosition = (widthResize: number, breakPoint: BreakPoint) => {
+        const xPosition = panelRef.current.getBoundingClientRect().x
+
+        panelRef.current.style.maxWidth = breakPoint.maxWidth
+        panelRef.current.style.minWidth = breakPoint.minWidth
+        panelRef.current.style.width = (widthResize - xPosition) + 'px'
+        setWidth((widthResize - xPosition), saveStateToLocalStorage)
+
+        if (breakPoint.nameBreakPoint && lateBreakPoint.current !== breakPoint.nameBreakPoint) {
+            setBreakPointActive(breakPoint.nameBreakPoint)
+            setActiveBreakPoint(saveStateToLocalStorage, breakPoint.nameBreakPoint)
+            lateBreakPoint.current = breakPoint.nameBreakPoint
+        }
+    }
 
     const mouseDown = (event: MouseEvent) => {
-        if (event.target === handler.current && panel.current) {
-            handler.current.classList.add(handlerActiveClassName)
-            panel.current.classList.add(panelActiveClassName)
-            activeResize.current = true
-            mouseDownWidth.current = event.x
+        if (event.target === handlerRef.current) {
+            startResize()
         }
     }
     const mouseUp = () => {
-        if (panel.current && handler.current){
-            handler.current.classList.remove(handlerActiveClassName)
-            panel.current.classList.remove(panelActiveClassName)
-
-            activeResize.current = false
-            mouseDownWidth.current = 0
-        }
+        endResize()
     }
     const mouseMove = (event: MouseEvent) => {
-        if (activeResize.current && panel.current && handler.current){
-            const newWidth = event.x + handler.current.offsetWidth / 2
-
-            if (newWidth > breakPoints.minWidth) {
-                setIsOpen(true)
-                panel.current.style.width = `${newWidth}px`
-                if (localStore){
-                    localStorage.setItem(localStore, String(newWidth))
-                }
-            } else if (newWidth > breakPoints.collapseWidth && newWidth < breakPoints.minWidth) {
-                setIsOpen(true)
-                panel.current.style.width = `${breakPoints.minWidth}px`
-                if (localStore) {
-                    localStorage.setItem(localStore, String(breakPoints.minWidth))
-                }
-            } else {
-                setIsOpen(false);
-                panel.current.style.width = `${breakPoints.collapseSize}px`
-                if (localStore) {
-                    localStorage.setItem(localStore, String(breakPoints.collapseSize))
-                }
-            }
+        if (handlerRef.current) {
+            const newWidth = event.x + (handlerRef.current.offsetWidth / 2)
+            resizeX(newWidth)
         }
     }
 
     const touchStart = (event: TouchEvent) => {
-        if (event.target === handler.current && panel.current) {
-            handler.current.classList.add(handlerActiveClassName)
-            panel.current.classList.add(panelActiveClassName)
-            activeResize.current = true
-            mouseDownWidth.current = event.changedTouches[0].clientX
+        if (event.target === handlerRef.current) {
+            startResize()
         }
     }
     const touchEnd = () => {
-        if (panel.current && handler.current){
-            handler.current.classList.remove(handlerActiveClassName)
-            panel.current.classList.remove(panelActiveClassName)
-
-            activeResize.current = false
-            mouseDownWidth.current = 0
-        }
+        endResize()
     }
     const touchMove = (event: TouchEvent) => {
-        if (activeResize.current && panel.current && handler.current){
-            const newWidth = event.changedTouches[0].clientX + handler.current.offsetWidth / 2
-
-            if (newWidth > breakPoints.minWidth) {
-                setIsOpen(true)
-                panel.current.style.width = `${newWidth}px`
-                if (localStore){
-                    localStorage.setItem(localStore, String(newWidth))
-                }
-            } else if (newWidth > breakPoints.collapseWidth && newWidth < breakPoints.minWidth) {
-                setIsOpen(true)
-                panel.current.style.width = `${breakPoints.minWidth}px`
-                if (localStore) {
-                    localStorage.setItem(localStore, String(breakPoints.minWidth))
-                }
-            } else {
-                setIsOpen(false);
-                panel.current.style.width = `${breakPoints.collapseSize}px`
-                if (localStore) {
-                    localStorage.setItem(localStore, String(breakPoints.collapseSize))
-                }
-            }
+        if (handlerRef.current) {
+            const newWidth = event.changedTouches[0].clientX + (handlerRef.current.offsetWidth / 2)
+            resizeX(newWidth)
         }
     }
 
     const preventDefaultDrag = (event: DragEvent) => {
         event.preventDefault()
     }
+    function throttle<F extends (...args: any[]) => void>(func: F, delay: number): (...args: Parameters<F>) => void {
+        let lastTime = 0;
 
-    const getStartWidthPanel = ():number => {
-        if (localStore) {
-            const value = localStorage.getItem(localStore)
-            if (value) {
-                return Number(value)
+        return function(this: any, ...args: Parameters<F>): void {
+            const now = Date.now();
+            if (now - lastTime >= delay) {
+                func.apply(this, args);
+                lastTime = now;
             }
-
-            localStorage.setItem(localStore, String(breakPoints.defaultWidth))
-            return breakPoints.defaultWidth
-        }
-        return  breakPoints.defaultWidth
+        };
     }
 
     useEffect(() => {
-        const panelCurrent = handler.current
+        const handler = handlerRef.current;
+        const panel = panelRef.current;
 
-        window.addEventListener('mousedown', mouseDown)
-        window.addEventListener('mouseup', mouseUp)
-        window.addEventListener('mousemove', mouseMove)
+        if (!handler || !panel) return;
 
-        window.addEventListener('touchmove', touchMove)
-        window.addEventListener('touchstart', touchStart)
-        window.addEventListener('touchend', touchEnd)
+        const mouseDownHandler = throttle(mouseDown, 25)
+        const mouseUpHandler = throttle(mouseUp, 25)
+        const mouseMoveHandler = throttle(mouseMove, 25)
 
-        panel.current.style.width = getStartWidthPanel()
+        const touchStartHandler = throttle(touchStart, 25)
+        const touchEndHandler = throttle(touchEnd, 25)
+        const touchMoveHandler = throttle(touchMove, 25)
 
+        window.addEventListener('mousedown', mouseDownHandler)
+        window.addEventListener('mouseup', mouseUpHandler)
+        window.addEventListener('mousemove', mouseMoveHandler)
 
-        panel.current.style.maxWidth = `${breakPoints.maxWidth}px`;
-        panel.current.style.minWidth = `${breakPoints.collapseSize}px`;
+        window.addEventListener('touchmove', touchMoveHandler)
+        window.addEventListener('touchstart', touchStartHandler)
+        window.addEventListener('touchend', touchEndHandler)
 
-        panelCurrent.addEventListener('dragstart', preventDefaultDrag)
+        handler.addEventListener('dragstart', preventDefaultDrag)
 
-        return ()=>{
-            window.removeEventListener('mousedown', mouseDown)
-            window.removeEventListener('mouseup', mouseUp)
-            window.removeEventListener('mousemove', mouseMove)
+        if (saveStateToLocalStorage) {
+            const width = getWidth(saveStateToLocalStorage)
+            const breakPoint = findBreakPoint(width)
+            if (breakPoint) {
+                resizeXPosition(width, breakPoint)
+            }
+        } else {
+            const breakPoint = findBreakPoint(defaultWidth)
+            if (breakPoint) {
+                resizeXPosition(defaultWidth, breakPoint)
+            }
+        }
 
-            window.removeEventListener('touchmove', touchMove)
-            window.removeEventListener('touchstart', touchStart)
-            window.removeEventListener('touchend', touchEnd)
+        return () => {
+            window.removeEventListener('mousedown', mouseDownHandler)
+            window.removeEventListener('mouseup', mouseUpHandler)
+            window.removeEventListener('mousemove', mouseMoveHandler)
 
-            if (panelCurrent){
-                panelCurrent.removeEventListener('dragstart', preventDefaultDrag);
+            window.removeEventListener('touchmove', touchMoveHandler)
+            window.removeEventListener('touchstart', touchStartHandler)
+            window.removeEventListener('touchend', touchEndHandler)
+
+            if (handler) {
+                handler.removeEventListener('dragstart', preventDefaultDrag);
             }
         }
     }, []);
+    useEffect(() => {
+        if (isActiveResize) {
+            window.document.body.style.cursor = 'col-resize'
+            window.document.body.style.userSelect = 'none'
+        } else {
+            window.document.body.style.cursor = 'auto'
+            window.document.body.style.userSelect = 'auto'
+        }
+    }, [isActiveResize]);
 
-    return getStartWidthPanel
+    return [breakPointActive, getWidth(saveStateToLocalStorage)]
+
 };
 
 export default UseResizeHandler;

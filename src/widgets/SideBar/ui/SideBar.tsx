@@ -1,6 +1,6 @@
 'use client'
-import React, {ReactNode, useRef} from 'react';
-import useResizeHandler, {useResizeHandlerSetting} from "@/widgets/SideBar/model/useResizeHandler";
+import React, {ReactNode, useEffect, useRef} from 'react';
+import useResizeHandler, {BreakPoint, useResizeHandlerSetting} from "@/widgets/SideBar/model/useResizeHandler";
 
 export interface SideBarProps {
     children: ReactNode;
@@ -11,32 +11,51 @@ export const SideBar = ({children, setIsOpen}: SideBarProps) => {
     const handlerRef = useRef(null)
 
     const settingResize = {
-        handler: handlerRef,
-        panel: panelRef,
+        handlerRef: handlerRef,
+        panelRef: panelRef,
 
         handlerActiveClassName: 'opacity-100',
 
-        breakPoints: {
-            minWidth: 260,
-            maxWidth: 420,
-            collapseWidth: 150,
-            collapseSize: 80,
-            defaultWidth: 260
-        },
-        localStore: 'main-panel',
-        setIsOpen: (value)=>{
-            setIsOpen(value)
-        }
+        breakPointsX: [
+            {
+                nameBreakPoint: 'close',
+
+                minSize:null,
+                maxSize:130,
+                minWidth:'80px',
+                maxWidth:'80px',
+            } as BreakPoint,
+            {
+                nameBreakPoint: 'open',
+
+                minSize:160,
+                maxSize:null,
+                minWidth:'260px',
+                maxWidth:'420px',
+            } as BreakPoint,
+        ],
+        defaultWidth: 80,
+
+        saveStateToLocalStorage: 'sidebar',
     } as useResizeHandlerSetting
 
-    const getStartWidthPanel = useResizeHandler(settingResize);
+    const [breakPointActive, getWidth] = useResizeHandler(settingResize)
+
+    useEffect(() => {
+        if (breakPointActive === 'close'){
+            setIsOpen(false)
+        } else {
+            setIsOpen(true)
+        }
+    }, [breakPointActive]);
 
     return (
-        <div className={'flex relative w-max min-h-screen'}>
-            <div style={{width: getStartWidthPanel()}} className={`bg-neutral-800`} ref={panelRef}>
+        <div className={`flex relative w-max min-h-screen`}>
+            <div style={{width: getWidth + 'px'}} ref={panelRef}>
                 {children}
             </div>
-            <div ref={handlerRef} className={`cursor-col-resize absolute right-[-2.5px] top-0 bottom-0 w-[5px] rounded-[50px] duration-300 bg-green-500 opacity-0 hover:opacity-100`}/>
+            <div ref={handlerRef}
+                 className={`cursor-col-resize absolute right-[-2px] top-0 bottom-0 w-[5px] rounded-[50px] duration-200 bg-indigo-500 opacity-0 hover:opacity-100 max-lg:w-0 max-lg:h-0 max-lg:invisible`}/>
         </div>
     );
 };
